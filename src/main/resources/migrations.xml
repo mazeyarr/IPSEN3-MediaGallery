@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+    <changeSet id="1" author="mazeyar">
+        <createTable tableName="users">
+            <column name="user_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(250)"/>
+            <column name="password" type="varchar(250)"/>
+            <column name="firstname" type="varchar(250)"/>
+            <column name="lastname" type="varchar(250)"/>
+        </createTable>
+
+        <createTable tableName="user_roles">
+            <column name="user_role_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="role" type="varchar(250)"/>
+
+            <column name="user_id" type="bigint"/>
+        </createTable>
+
+        <createTable tableName="institutes">
+            <column name="institute_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(250)"/>
+            <column name="location" type="varchar(250)"/>
+        </createTable>
+
+        <createTable tableName="educations">
+            <column name="education_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(250)"/>
+            <column name="institute_id" type="bigint"/>
+        </createTable>
+
+        <createTable tableName="projects">
+            <column name="project_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(250)"/>
+            <column name="language" type="varchar(250)"/>
+            <column name="grade" type="float"/>
+
+            <column name="created_user_id" type="bigint"/>
+            <column name="education_id" type="bigint"/>
+        </createTable>
+
+        <createTable tableName="projects_likes">
+            <column name="project_likes_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="like_type" type="varchar(50)" />
+
+            <column name="user_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+
+            <column name="project_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="tags">
+            <column name="tag_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="name" type="varchar(50)"/>
+        </createTable>
+
+        <createTable tableName="projects_tags">
+            <column name="projects_tags_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="project_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="tag_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="uploads">
+            <column name="upload_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="filename" type="varchar(250)"/>
+            <column name="path" type="varchar(250)"/>
+            <column name="mime" type="varchar(250)"/>
+            <column name="extension" type="varchar(250)"/>
+
+            <column name="project_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseColumnNames="user_id"
+                baseTableName="user_roles"
+                constraintName="user_role_to_users"
+                referencedColumnNames="user_id"
+                referencedTableName="users" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="institute_id"
+                baseTableName="educations"
+                constraintName="educations_to_institutes"
+                referencedColumnNames="institute_id"
+                referencedTableName="institutes" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="created_user_id"
+                baseTableName="projects"
+                constraintName="projects_to_users"
+                referencedColumnNames="user_id"
+                referencedTableName="users" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="user_id"
+                baseTableName="projects_likes"
+                constraintName="projects_likes_to_users"
+                referencedColumnNames="user_id"
+                referencedTableName="users" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="project_id"
+                baseTableName="projects_likes"
+                constraintName="projects_likes_to_projects"
+                referencedColumnNames="project_id"
+                referencedTableName="projects" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="project_id"
+                baseTableName="projects_tags"
+                constraintName="projects_tags_to_projects"
+                referencedColumnNames="project_id"
+                referencedTableName="projects" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="tag_id"
+                baseTableName="projects_tags"
+                constraintName="projects_tags_to_tags"
+                referencedColumnNames="tag_id"
+                referencedTableName="tags" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="education_id"
+                baseTableName="projects"
+                constraintName="projects_to_educations"
+                referencedColumnNames="education_id"
+                referencedTableName="educations" />
+
+        <addForeignKeyConstraint
+                baseColumnNames="project_id"
+                baseTableName="uploads"
+                constraintName="uploads_to_projects"
+                referencedColumnNames="project_id"
+                referencedTableName="projects" />
+
+        <!--Seeding Table-->
+        <!--Seeding Tags-->
+<!--        <insert tableName="tags">-->
+<!--            <column name="name">Dyslexie</column>-->
+<!--        </insert>-->
+    </changeSet>
+</databaseChangeLog>
