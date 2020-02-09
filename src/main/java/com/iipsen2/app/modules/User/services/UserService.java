@@ -7,7 +7,9 @@ import com.iipsen2.app.modules.User.dao.UserDao;
 import com.iipsen2.app.modules.User.models.User;
 import com.iipsen2.app.modules.User.models.UserRoles;
 import com.iipsen2.app.services.CoreService;
+import com.iipsen2.app.services.ExceptionService;
 
+import javax.ws.rs.core.Response;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.List;
@@ -15,29 +17,30 @@ import java.util.List;
 public class UserService extends CoreService {
     private static User AuthUser;
 
-    public static User getAuthenticatedUser(String username, String password) {
+    public static User getAuthenticatedUserBy(String username, String password) {
         try {
             User authUser = getDao().findUserByUsername(username);
 
-            if (authUser == null)
-                return new User();
+            proceedIfUserNotNull(authUser);
+            proceedIfPasswordIsValid(password, authUser.getPassword());
 
-            if (PasswordDecryptService.validatePassword(password, authUser.getPassword())) {
-                List<UserRoles> authUserRoles = getDao().findUserRolesByUserId(
-                        authUser.getId()
-                );
+            List<UserRoles> authUserRoles = getDao().findUserRolesByUserId(authUser.getId());
 
-                authUser.setRoles(authUserRoles);
-                authUser.setJwt(
-                        MainService.tokenProvider
-                                .generateToken(authUser.getId())
-                );
+            authUser.setRoles(authUserRoles);
+            authUser.setJwt(
+                    MainService.tokenProvider
+                            .generateToken(authUser.getId())
+            );
 
-                return authUser;
-            }
+            return authUser;
 
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            System.err.println("Could not validate user, returning empty user...");
+        } catch (Exception e) {
+            ExceptionService.throwIlIllegalArgumentException(
+                    UserService.class,
+                    "Failed to get authenticated user",
+                    e.getCause().getMessage(),
+                    Response.Status.CONFLICT
+            );
         }
 
         return new User();
@@ -60,7 +63,8 @@ public class UserService extends CoreService {
 
     public static User createUser(User user, UserRoleType role) {
         long userId  = getDao().createUser(user);
-        long userRoleId = getDao().addRoleToUser(userId, role);
+
+        getDao().addRoleToUser(userId, role);
 
         return getUserById(userId);
     }
@@ -97,7 +101,7 @@ public class UserService extends CoreService {
         return user;
     }
 
-    public static User getAuthenticatedUser() {
+    public static User getAuthenticatedUserBy() {
         return AuthUser;
     }
 
@@ -107,5 +111,15 @@ public class UserService extends CoreService {
 
     private static UserDao getDao() {
         return getDao(UserModule.MODULE_TYPE, UserDao.class);
+    }
+
+    private static void proceedIfUserNotNull(User user) throws Exception {
+        if (user == null) throw new Exception("User does not exist");
+    }
+
+    private static void proceedIfPasswordIsValid(String givenPassword, String password) throws Exception {
+        if (!PasswordDecryptService.validatePassword(givenPassword, password)) {
+            throw new Exception("Given password is invalid!");
+        }
     }
 }

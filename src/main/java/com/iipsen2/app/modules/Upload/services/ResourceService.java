@@ -100,16 +100,16 @@ public class ResourceService extends CoreService {
         return getDao().findResourceByProjectId(projectId);
     }
 
-    public static Resource updateResource(
+    public static Resource updateResourceFile(
         Resource resource,
-        UploadType uploadType,
+        UploadType typeOfUpload,
         InputStream updatedResourceStream,
         String filename
     ) {
         try {
-            File temporaryResource = createTemporaryResource(updatedResourceStream, uploadType, filename);
+            File temporaryResource = createTemporaryResource(updatedResourceStream, typeOfUpload, filename);
 
-            switch (uploadType) {
+            switch (typeOfUpload) {
                 case PROJECT:
                     if (isResourceDeletedFromS3(resource.getPath())) {
                         String fileExtension = FilenameUtils.getExtension(filename);
@@ -121,7 +121,7 @@ public class ResourceService extends CoreService {
 
                         resource.setPath(UploadPaths.generateUploadKey(
                             UUID.randomUUID().toString() + "." + System.currentTimeMillis() + "." + fileExtension,
-                            uploadType,
+                            typeOfUpload,
                             false
                         ));
 

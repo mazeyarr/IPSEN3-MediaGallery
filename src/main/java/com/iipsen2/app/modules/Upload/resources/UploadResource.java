@@ -97,7 +97,7 @@ public class UploadResource extends CoreResourceService {
         @FormDataParam("resource") InputStream resourceInputStream,
         @FormDataParam("resource") FormDataContentDisposition resourceMetaData
     ) {
-        return ResourceService.updateResource(
+        return ResourceService.updateResourceFile(
             ResourceService.findResourceById(resourceId),
             UploadType.valueOf(uploadType),
             resourceInputStream,

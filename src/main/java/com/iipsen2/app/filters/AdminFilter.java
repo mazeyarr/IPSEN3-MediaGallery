@@ -25,7 +25,7 @@ public class AdminFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext context) {
-        boolean isAdmin = UserService.getAuthenticatedUser().getRoles().stream().anyMatch(
+        boolean isAdmin = UserService.getAuthenticatedUserBy().getRoles().stream().anyMatch(
             (userRole -> UserRoleType.valueOf(userRole.getRole()) == UserRoleType.ADMIN)
         );
 

@@ -83,7 +83,7 @@ public class ProjectResource {
             projectCreateParams.getTitle(),
             projectCreateParams.getLanguage(),
             projectCreateParams.getGrade(),
-            UserService.getAuthenticatedUser(),
+            UserService.getAuthenticatedUserBy(),
             projectCreateParams.getEducation()
         );
 
@@ -101,7 +101,7 @@ public class ProjectResource {
             projectUpdateParams.getTitle(),
             projectUpdateParams.getLanguage(),
             projectUpdateParams.getGrade(),
-            UserService.getAuthenticatedUser(),
+            UserService.getAuthenticatedUserBy(),
             projectUpdateParams.getEducation()
         );
 

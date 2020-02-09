@@ -57,7 +57,7 @@ public class ProjectCreatorFilter implements ContainerRequestFilter {
                     );
                 }
 
-                if (project.getCreatedBy().getId() != UserService.getAuthenticatedUser().getId()) {
+                if (project.getCreatedBy().getId() != UserService.getAuthenticatedUserBy().getId()) {
                     ExceptionService.throwIlIllegalArgumentException(
                         this.getClass(),
                         "You are not the creator of this project!",

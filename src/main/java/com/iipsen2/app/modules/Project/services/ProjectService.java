@@ -40,10 +40,11 @@ public class ProjectService extends CoreService {
         return getDao().findProjectById(id);
     }
 
-    public static List<Project> searchProjectByTitle(String title, boolean caseSensitive) {
-        if (caseSensitive) {
+    public static List<Project> searchProjectByTitle(String title, boolean isCaseSensitive) {
+        if (isCaseSensitive) {
             return getDao().searchProjectByTitleCaseSensitive("%" + title + "%");
         }
+
         return getDao().searchProjectByTitle("%" + title + "%");
     }
 
@@ -114,31 +115,19 @@ public class ProjectService extends CoreService {
     }
 
     public static void addLikeToProject(Project project, LikeType likeType) {
+        User user = UserService.getAuthenticatedUserBy();
+        long userId = user.getId();
         Map<LikeType, List<User>> allLikesOfProject = getLikesOfProject(project);
 
-        if (isAlreadyLikedByUser(allLikesOfProject, UserService.getAuthenticatedUser().getId())) {
-            getDao().removeLikeFromProject(UserService.getAuthenticatedUser(), project);
+        removeLikeFromProjectIfAlreadyLiked(user, project, likeType, allLikesOfProject);
 
-            if (isSameTypeOfLike(allLikesOfProject, UserService.getAuthenticatedUser().getId(), likeType)) {
-                getDao().removeLikeFromProject(UserService.getAuthenticatedUser(), project);
-                return;
-            }
-        }
-
-        getDao().addLikeToProject(UserService.getAuthenticatedUser(), likeType, project);
+        getDao().addLikeToProject(UserService.getAuthenticatedUserBy(), likeType, project);
     }
 
     public static void addLikeToProjectFromUser(Project project, User user, LikeType likeType) {
         Map<LikeType, List<User>> allLikesOfProject = getLikesOfProject(project);
 
-        if (isAlreadyLikedByUser(allLikesOfProject, user.getId())) {
-            getDao().removeLikeFromProject(user, project);
-
-            if (isSameTypeOfLike(allLikesOfProject, user.getId(), likeType)) {
-                getDao().removeLikeFromProject(user, project);
-                return;
-            }
-        }
+        removeLikeFromProjectIfAlreadyLiked(user, project, likeType, allLikesOfProject);
 
         getDao().addLikeToProject(user, likeType, project);
     }
@@ -148,14 +137,7 @@ public class ProjectService extends CoreService {
         User user = UserService.getUserById(userId);
         Map<LikeType, List<User>> allLikesOfProject = getLikesOfProject(project);
 
-        if (isAlreadyLikedByUser(allLikesOfProject, user.getId())) {
-            getDao().removeLikeFromProject(user, project);
-
-            if (isSameTypeOfLike(allLikesOfProject, user.getId(), likeType)) {
-                getDao().removeLikeFromProject(user, project);
-                return;
-            }
-        }
+        removeLikeFromProjectIfAlreadyLiked(user, project, likeType, allLikesOfProject);
 
         getDao().addLikeToProject(user, likeType, project);
     }
@@ -180,7 +162,7 @@ public class ProjectService extends CoreService {
         }
     }
 
-    public static boolean isAlreadyLikedByUser(
+    public static boolean isProjectAlreadyLikedByUser(
         Map<LikeType, List<User>> allLikes,
         long userId
     ) {
@@ -209,5 +191,29 @@ public class ProjectService extends CoreService {
 
     private static ProjectDao getDao() {
         return getDao(ProjectModule.MODULE_TYPE, ProjectDao.class);
+    }
+
+    private static void removeLikeFromProjectIfAlreadyLiked(
+            User user,
+            Project project,
+            LikeType likeType,
+            Map<LikeType, List<User>> allLikesOfProject
+    ) {
+        if (isProjectAlreadyLikedByUser(allLikesOfProject, user.getId())) {
+            getDao().removeLikeFromProject(user, project);
+
+            removeLikeFromProjectIfSameTypeOfLike(user, project, likeType, allLikesOfProject);
+        }
+    }
+
+    private static void removeLikeFromProjectIfSameTypeOfLike(
+            User user,
+            Project project,
+            LikeType likeType,
+            Map<LikeType, List<User>> allLikesOfProject
+    ) {
+        if (isSameTypeOfLike(allLikesOfProject, user.getId(), likeType)) {
+            getDao().removeLikeFromProject(user, project);
+        }
     }
 }

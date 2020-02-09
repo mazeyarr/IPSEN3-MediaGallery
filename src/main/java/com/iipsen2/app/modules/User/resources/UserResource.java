@@ -32,7 +32,7 @@ public class UserResource {
     public User postLoginAction(
             @FormParam("token") String token
     ) {
-        return UserService.getAuthenticatedUser();
+        return UserService.getAuthenticatedUserBy();
     }
 
     /**
@@ -52,7 +52,7 @@ public class UserResource {
             @FormParam("password") String password
     ) {
 
-        return UserService.getAuthenticatedUser(username, password);
+        return UserService.getAuthenticatedUserBy(username, password);
     }
 
     @POST
