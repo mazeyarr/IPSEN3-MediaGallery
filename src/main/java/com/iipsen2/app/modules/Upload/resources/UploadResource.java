@@ -55,36 +55,29 @@ public class UploadResource extends CoreResourceService {
 
         List<Resource> resourcesResolved = new ArrayList<>();
         List<Resource> resourcesRejected = new ArrayList<>();
-        List<FormDataBodyPart> entities = resourcesUpload.getFields(UploadPaths.RESOURCE_RELATED_ENTITY_FORM_DATA_KEY);
+        List<FormDataBodyPart> uploadEntities = resourcesUpload.getFields(UploadPaths.RESOURCE_RELATED_ENTITY_FORM_DATA_KEY);
 
-        entities.forEach((entity -> {
-            if (NumberUtil.isStringLong(entity.getValue())) {
-                long entityId = Long.parseLong(entity.getValue());
+        uploadEntities.forEach((uploadEntity -> {
+            proceedUploadIfGivenEntityIdIsLong(uploadEntity.getValue());
 
-                FormDataBodyPart uploadedResource = resourcesUpload.getField(
-                    UploadPaths.RESOURCE_FORM_DATA_KEY + entityId
-                );
+            long uploadEntityId = Long.parseLong(uploadEntity.getValue());
 
-                Resource resource = ResourceService.createResource(
-                    entityId,
+            FormDataBodyPart uploadedResource = resourcesUpload.getField(
+                    UploadPaths.RESOURCE_FORM_DATA_KEY + uploadEntityId
+            );
+
+            Resource resource = ResourceService.createResource(
+                    uploadEntityId,
                     UploadType.valueOf(uploadType),
                     uploadedResource.getFormDataContentDisposition().getFileName(),
                     uploadedResource.getValueAs(InputStream.class)
-                );
+            );
 
-                if (resource.isValid()) {
-                    resourcesResolved.add(resource);
-                } else {
-                    resource.setFilename(uploadedResource.getFormDataContentDisposition().getFileName());
-                    resourcesRejected.add(resource);
-                }
+            if (resource.isValid()) {
+                resourcesResolved.add(resource);
             } else {
-                ExceptionService.throwIlIllegalArgumentException(
-                    this.getClass(),
-                    "Upload failed: Entity ID -> '" + entity.getValue() + "' <- is not a number!",
-                    "Upload failed, entity param was not a number",
-                    Response.Status.BAD_GATEWAY
-                );
+                resource.setFilename(uploadedResource.getFormDataContentDisposition().getFileName());
+                resourcesRejected.add(resource);
             }
         }));
 
@@ -120,5 +113,16 @@ public class UploadResource extends CoreResourceService {
         return ResourceService.getPublicResourceUrl(
             ResourceService.findResourceById(resourceId)
         );
+    }
+
+    private void proceedUploadIfGivenEntityIdIsLong(String value) {
+        if (!NumberUtil.isStringLong(value)) {
+            ExceptionService.throwIlIllegalArgumentException(
+                    this.getClass(),
+                    "Upload failed: Entity ID -> '" + value + "' <- is not a number!",
+                    "Upload failed, entity param was not a number",
+                    Response.Status.BAD_GATEWAY
+            );
+        }
     }
 }

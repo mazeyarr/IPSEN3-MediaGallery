@@ -9,10 +9,12 @@ import com.iipsen2.app.modules.Upload.dao.ResourceDao;
 import com.iipsen2.app.modules.Upload.models.Resource;
 import com.iipsen2.app.modules.Upload.models.ResourceSimple;
 import com.iipsen2.app.services.CoreService;
+import com.iipsen2.app.services.ExceptionService;
 import com.iipsen2.app.utility.TimeUtil;
 import liquibase.util.file.FilenameUtils;
 import org.apache.commons.io.FileUtils;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,23 +40,18 @@ public class ResourceService extends CoreService {
                 case PROJECT:
                     Project project = ProjectService.findProjectById(entityId);
 
-                    // TODO: try / catch
-                    if (project.getId() != entityId) {
-                        // TODO: schedule for deletion?
-                        // TODO: Throw exception!
-                        return new Resource();
-                    }
+                    proceedIfIdsAreTheSame(project.getId(), entityId);
 
-                    String key = UploadPaths.generateUploadKey(
+                    String s3UploadKey = UploadPaths.generateUploadKey(
                         UUID.randomUUID().toString() + "." + System.currentTimeMillis() + "." + extension,
                         UploadType.PROJECT,
                         false
                     );
 
-                    if (getS3Service().putS3Object(key, temporaryResource)) {
+                    if (isResourceUploaded(s3UploadKey, temporaryResource)) {
                         Resource resource = new Resource(
                             filename,
-                            key,
+                            s3UploadKey,
                             mime,
                             extension,
                             project
@@ -65,25 +62,28 @@ public class ResourceService extends CoreService {
                             resource.getProject()
                         );
 
-                        cleanupTemporaryResourceFiles(temporaryResource);
 
                         return getDao().findResourceById(resourceId);
                     } else {
-                        cleanupTemporaryResourceFiles(temporaryResource);
-
-                        ProjectService.deleteProjectById(project.getId());
+                        deleteProjectLinkedToResource(project.getId());
                     }
 
-                case AVATAR:
-                    // TODO: For future scaling.
-                    cleanupTemporaryResourceFiles(temporaryResource);
-                default:
                     cleanupTemporaryResourceFiles(temporaryResource);
 
-                    return new Resource();
+                case AVATAR:
+                default:
+                    cleanupTemporaryResourceFiles(temporaryResource);
+                    throw new Exception();
             }
 
         } catch (Exception e) {
+            ExceptionService.throwIlIllegalArgumentException(
+                    ResourceService.class,
+                    "Could not execute because its unknown what to do with this upload",
+                    "UploadType was unknown",
+                    Response.Status.CONFLICT
+            );
+
             return new Resource();
         }
     }
@@ -111,21 +111,21 @@ public class ResourceService extends CoreService {
 
             switch (uploadType) {
                 case PROJECT:
-                    if (getS3Service().deleteS3Object(resource.getPath())) {
-                        String extension = FilenameUtils.getExtension(filename);
-                        String mime = Files.probeContentType(temporaryResource.toPath());
+                    if (isResourceDeletedFromS3(resource.getPath())) {
+                        String fileExtension = FilenameUtils.getExtension(filename);
+                        String fileMimeType = Files.probeContentType(temporaryResource.toPath());
 
                         resource.setFilename(filename);
-                        resource.setExtension(extension);
-                        resource.setMime(mime);
+                        resource.setExtension(fileExtension);
+                        resource.setMime(fileMimeType);
 
                         resource.setPath(UploadPaths.generateUploadKey(
-                            UUID.randomUUID().toString() + "." + System.currentTimeMillis() + "." + extension,
+                            UUID.randomUUID().toString() + "." + System.currentTimeMillis() + "." + fileExtension,
                             uploadType,
                             false
                         ));
 
-                        if (getS3Service().putS3Object(resource.getPath(), temporaryResource)) {
+                        if (isResourceUploaded(resource.getPath(), temporaryResource)) {
 
                             getDao().updateResource(
                                 resource,
@@ -144,11 +144,17 @@ public class ResourceService extends CoreService {
                 case AVATAR:
                 default:
                     cleanupTemporaryResourceFiles(temporaryResource);
-
-                    return new Resource();
+                    throw new Exception();
 
             }
         } catch (Exception e) {
+            ExceptionService.throwIlIllegalArgumentException(
+                    ResourceService.class,
+                    "Could not execute because its unknown what to do with this upload",
+                    "UploadType was unknown",
+                    Response.Status.CONFLICT
+            );
+
             return new Resource();
         }
     }
@@ -213,5 +219,28 @@ public class ResourceService extends CoreService {
         } else {
             System.out.println("-- TEMP FOLDER: Failed to delete temp file! --");
         }
+    }
+
+    private static void proceedIfIdsAreTheSame(long idA, long idB) {
+        if (idA != idB) {
+            ExceptionService.throwIlIllegalArgumentException(
+                    ResourceService.class,
+                    "Error occurd when comparing ids",
+                    "Creating resource, but ids didnt match",
+                    Response.Status.CONFLICT
+            );
+        }
+    }
+
+    private static boolean isResourceUploaded(String UploadKey, File resourceFileToUpload) {
+        return getS3Service().putS3Object(UploadKey, resourceFileToUpload);
+    }
+
+    private static boolean isResourceDeletedFromS3(String s3UploadKey) {
+        return getS3Service().deleteS3Object(s3UploadKey);
+    }
+
+    private static void deleteProjectLinkedToResource(long projectId) {
+        ProjectService.deleteProjectById(projectId);
     }
 }
