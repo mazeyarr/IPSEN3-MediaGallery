@@ -48,6 +48,7 @@ public class ResourceService extends CoreService {
                         false
                     );
 
+
                     if (isResourceUploaded(s3UploadKey, temporaryResource)) {
                         Resource resource = new Resource(
                             filename,
@@ -108,49 +109,39 @@ public class ResourceService extends CoreService {
     ) {
         try {
             File temporaryResource = createTemporaryResource(updatedResourceStream, typeOfUpload, filename);
+            String fileExtension = FilenameUtils.getExtension(filename);
+            String fileMimeType = Files.probeContentType(temporaryResource.toPath());
 
             switch (typeOfUpload) {
                 case PROJECT:
-                    if (isResourceDeletedFromS3(resource.getPath())) {
-                        String fileExtension = FilenameUtils.getExtension(filename);
-                        String fileMimeType = Files.probeContentType(temporaryResource.toPath());
+                    proceedIfResourceDeletedFromS3(resource, temporaryResource);
 
-                        resource.setFilename(filename);
-                        resource.setExtension(fileExtension);
-                        resource.setMime(fileMimeType);
+                    resource.setFilename(filename);
+                    resource.setExtension(fileExtension);
+                    resource.setMime(fileMimeType);
 
-                        resource.setPath(UploadPaths.generateUploadKey(
-                            UUID.randomUUID().toString() + "." + System.currentTimeMillis() + "." + fileExtension,
-                            typeOfUpload,
-                            false
-                        ));
+                    resource.setPath(UploadPaths.generateUploadKey(
+                        UUID.randomUUID().toString() + "." + System.currentTimeMillis() + "." + fileExtension,
+                        typeOfUpload,
+                        false
+                    ));
 
-                        if (isResourceUploaded(resource.getPath(), temporaryResource)) {
+                    proceedIfResourceUploaded(resource.getPath(), temporaryResource);
 
-                            getDao().updateResource(
-                                resource,
-                                resource.getProject()
-                            );
-
-                            cleanupTemporaryResourceFiles(temporaryResource);
-
-                            return ResourceService.findResourceById(resource.getId());
-                        }
-                    }
+                    getDao().updateResource(resource, resource.getProject());
 
                     cleanupTemporaryResourceFiles(temporaryResource);
-
-                    return new Resource();
+                    return ResourceService.findResourceById(resource.getId());
                 case AVATAR:
                 default:
                     cleanupTemporaryResourceFiles(temporaryResource);
-                    throw new Exception();
+                    throw new Exception("Could not execute because its unknown what to do with this upload");
 
             }
         } catch (Exception e) {
             ExceptionService.throwIlIllegalArgumentException(
                     ResourceService.class,
-                    "Could not execute because its unknown what to do with this upload",
+                    e.getMessage(),
                     "UploadType was unknown",
                     Response.Status.CONFLICT
             );
@@ -242,5 +233,19 @@ public class ResourceService extends CoreService {
 
     private static void deleteProjectLinkedToResource(long projectId) {
         ProjectService.deleteProjectById(projectId);
+    }
+
+    private static void proceedIfResourceUploaded(String uploadKey, File temporaryResource) throws Exception {
+        if (!isResourceUploaded(uploadKey, temporaryResource)) {
+            cleanupTemporaryResourceFiles(temporaryResource);
+            throw new Exception("Upload to S3 bucket failed!");
+        }
+    }
+
+    private static void proceedIfResourceDeletedFromS3(Resource resource, File temporaryResource) throws Exception {
+        if (!isResourceDeletedFromS3(resource.getPath())) {
+            cleanupTemporaryResourceFiles(temporaryResource);
+            throw new Exception("Could not delete resource from S3");
+        }
     }
 }

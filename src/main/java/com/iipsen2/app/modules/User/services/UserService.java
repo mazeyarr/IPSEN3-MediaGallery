@@ -73,11 +73,7 @@ public class UserService extends CoreService {
         User user = getUserById(userId);
 
         if (user.isValidUser()) {
-            boolean isSameRole = user.getRoles().stream().anyMatch(
-                (userRole -> UserRoleType.valueOf(userRole.getRole()) == userRoleType)
-            );
-
-            if (!isSameRole) {
+            if (!hasUserSameRolAs(userRoleType, user)) {
                 getDao().addRoleToUser(userId, userRoleType);
             }
         }
@@ -121,5 +117,11 @@ public class UserService extends CoreService {
         if (!PasswordDecryptService.validatePassword(givenPassword, password)) {
             throw new Exception("Given password is invalid!");
         }
+    }
+
+    private static boolean hasUserSameRolAs(UserRoleType roleType, User user) {
+        return user.getRoles().stream().anyMatch(
+                (userRole -> UserRoleType.valueOf(userRole.getRole()) == roleType)
+        );
     }
 }
