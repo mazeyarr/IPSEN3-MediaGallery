@@ -7,9 +7,9 @@ import com.amazonaws.services.s3.model.S3Object;
 import java.io.File;
 
 public interface S3ServiceMethods {
-    S3Object getObject(String key);
+    S3Object getS3Object(String key);
 
-    boolean putObject(String key, File object);
+    boolean putS3Object(String key, File object);
 
-    boolean deleteObject(String key);
+    boolean deleteS3Object(String key);
 }

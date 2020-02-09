@@ -120,20 +120,20 @@ public class MainService extends Application<MainConfiguration> {
 
 
     /*
-      Health Checks
+      System health checks
      */
     environment.healthChecks().register("checks",
             new DatabaseHealthCheck(jdbi, configuration.getDataSourceFactory().getValidationQuery()));
 
     /*
-      Initializable
+      Initializable variables
      */
     tokenProvider = new TokenProvider();
     amazonS3 = new S3Service();
     amazonS3Encrypted = new S3EncryptedService();
 
     /*
-      Module seeders
+      Module database seeders
      */
     new UserTableSeeder(true);
     new InstituteTableSeeder(true);

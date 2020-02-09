@@ -9,15 +9,12 @@ import org.glassfish.jersey.message.internal.MediaTypes;
 import org.glassfish.jersey.server.ContainerRequest;
 
 import javax.annotation.Priority;
-import javax.ws.rs.Priorities;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 
 @Provider
 @ProjectCreatorBinding
@@ -60,7 +57,7 @@ public class ProjectCreatorFilter implements ContainerRequestFilter {
                     );
                 }
 
-                if (project.getCreatedBy().getId() != UserService.getAuthUser().getId()) {
+                if (project.getCreatedBy().getId() != UserService.getAuthenticatedUser().getId()) {
                     ExceptionService.throwIlIllegalArgumentException(
                         this.getClass(),
                         "You are not the creator of this project!",

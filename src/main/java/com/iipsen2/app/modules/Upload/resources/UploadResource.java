@@ -3,7 +3,6 @@ package com.iipsen2.app.modules.Upload.resources;
 import com.iipsen2.app.filters.bindings.AuthBinding;
 import com.iipsen2.app.interfaces.abstracts.UploadPaths;
 import com.iipsen2.app.interfaces.enums.UploadType;
-import com.iipsen2.app.modules.Project.models.Project;
 import com.iipsen2.app.modules.Upload.models.Resource;
 import com.iipsen2.app.modules.Upload.models.ResourceSimple;
 import com.iipsen2.app.modules.Upload.services.ResourceService;
@@ -59,7 +58,7 @@ public class UploadResource extends CoreResourceService {
         List<FormDataBodyPart> entities = resourcesUpload.getFields(UploadPaths.RESOURCE_RELATED_ENTITY_FORM_DATA_KEY);
 
         entities.forEach((entity -> {
-            if (NumberUtil.isLong(entity.getValue())) {
+            if (NumberUtil.isStringLong(entity.getValue())) {
                 long entityId = Long.parseLong(entity.getValue());
 
                 FormDataBodyPart uploadedResource = resourcesUpload.getField(

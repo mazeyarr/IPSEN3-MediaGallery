@@ -51,7 +51,7 @@ public class ResourceService extends CoreService {
                         false
                     );
 
-                    if (getS3Service().putObject(key, temporaryResource)) {
+                    if (getS3Service().putS3Object(key, temporaryResource)) {
                         Resource resource = new Resource(
                             filename,
                             key,
@@ -65,20 +65,20 @@ public class ResourceService extends CoreService {
                             resource.getProject()
                         );
 
-                        temporaryResourceCleanup(temporaryResource);
+                        cleanupTemporaryResourceFiles(temporaryResource);
 
                         return getDao().findResourceById(resourceId);
                     } else {
-                        temporaryResourceCleanup(temporaryResource);
+                        cleanupTemporaryResourceFiles(temporaryResource);
 
                         ProjectService.deleteProjectById(project.getId());
                     }
 
                 case AVATAR:
                     // TODO: For future scaling.
-                    temporaryResourceCleanup(temporaryResource);
+                    cleanupTemporaryResourceFiles(temporaryResource);
                 default:
-                    temporaryResourceCleanup(temporaryResource);
+                    cleanupTemporaryResourceFiles(temporaryResource);
 
                     return new Resource();
             }
@@ -106,13 +106,12 @@ public class ResourceService extends CoreService {
         InputStream updatedResourceStream,
         String filename
     ) {
-//varplaats try naar controller s
         try {
             File temporaryResource = createTemporaryResource(updatedResourceStream, uploadType, filename);
 
             switch (uploadType) {
                 case PROJECT:
-                    if (getS3Service().deleteObject(resource.getPath())) {
+                    if (getS3Service().deleteS3Object(resource.getPath())) {
                         String extension = FilenameUtils.getExtension(filename);
                         String mime = Files.probeContentType(temporaryResource.toPath());
 
@@ -126,25 +125,25 @@ public class ResourceService extends CoreService {
                             false
                         ));
 
-                        if (getS3Service().putObject(resource.getPath(), temporaryResource)) {
+                        if (getS3Service().putS3Object(resource.getPath(), temporaryResource)) {
 
                             getDao().updateResource(
                                 resource,
                                 resource.getProject()
                             );
 
-                            temporaryResourceCleanup(temporaryResource);
+                            cleanupTemporaryResourceFiles(temporaryResource);
 
                             return ResourceService.findResourceById(resource.getId());
                         }
                     }
 
-                    temporaryResourceCleanup(temporaryResource);
+                    cleanupTemporaryResourceFiles(temporaryResource);
 
                     return new Resource();
                 case AVATAR:
                 default:
-                    temporaryResourceCleanup(temporaryResource);
+                    cleanupTemporaryResourceFiles(temporaryResource);
 
                     return new Resource();
 
@@ -157,7 +156,7 @@ public class ResourceService extends CoreService {
     public static void deleteResourceById(long id) {
         Resource resource = getDao().findResourceById(id);
 
-        if (getS3Service().deleteObject(resource.getPath())) {
+        if (getS3Service().deleteS3Object(resource.getPath())) {
             getDao().deleteResourceById(id);
         }
     }
@@ -166,7 +165,7 @@ public class ResourceService extends CoreService {
         Resource resource = getDao().findResourceByProjectId(projectId);
 
         if (resource != null && resource.isValid()) {
-            if (getS3Service().deleteObject(resource.getPath())) {
+            if (getS3Service().deleteS3Object(resource.getPath())) {
                 getDao().deleteResourceById(resource.getId());
             }
         }
@@ -174,15 +173,15 @@ public class ResourceService extends CoreService {
 
     public static ResourceSimple getPublicResourceUrl(Resource resource) {
         return new ResourceSimple(
-            getS3Service().generatePreSignedObjectUrl(
+            getS3Service().generatePreSignedS3ObjectUrl(
                 resource.getPath(),
-                TimeUtil.minutesToMillis(Resource.PUBLIC_URL_EXPIRATION_TIME_IN_MINUTES)
+                TimeUtil.convertMinutesToMillis(Resource.PUBLIC_URL_EXPIRATION_TIME_IN_MINUTES)
             ),
             Calendar.getInstance().getTime(),
             new Date(
                 Calendar.getInstance().getTimeInMillis()
                     +
-                TimeUtil.minutesToMillis(Resource.PUBLIC_URL_EXPIRATION_TIME_IN_MINUTES)
+                TimeUtil.convertMinutesToMillis(Resource.PUBLIC_URL_EXPIRATION_TIME_IN_MINUTES)
             )
         );
     }
@@ -196,21 +195,19 @@ public class ResourceService extends CoreService {
         UploadType uploadType,
         String filename
     ) throws Exception {
-        File temporaryFile = new File(UploadPaths.generateTempFilePath(filename, uploadType));
-//remove try catch and throw the error instead
+        File temporaryFile = new File(UploadPaths.generateTemporaryFileSavePath(filename, uploadType));
+
         try {
             FileUtils.copyInputStreamToFile(inputStream, temporaryFile);
 
             return temporaryFile;
         } catch (IOException e) {
             // TODO: Logger
-            System.out.println("Could not creat, temporary file from uploaded resource...");
-
-            throw new Exception("File was incorrect or corrupt...");
+            throw new Exception("File was incorrect or corrupted...");
         }
     }
 
-    private static void temporaryResourceCleanup(File file) {
+    private static void cleanupTemporaryResourceFiles(File file) {
         if(file.delete()) {
             System.out.println("-- TEMP FOLDER: Temp file deleted! --");
         } else {

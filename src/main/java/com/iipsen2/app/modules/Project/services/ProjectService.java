@@ -9,7 +9,6 @@ import com.iipsen2.app.modules.Tag.models.Tag;
 import com.iipsen2.app.modules.Tag.models.TagSimple;
 import com.iipsen2.app.modules.Upload.services.ResourceService;
 import com.iipsen2.app.modules.User.models.User;
-import com.iipsen2.app.modules.User.models.UserSimple;
 import com.iipsen2.app.modules.User.services.UserService;
 import com.iipsen2.app.services.CoreService;
 
@@ -117,16 +116,16 @@ public class ProjectService extends CoreService {
     public static void addLikeToProject(Project project, LikeType likeType) {
         Map<LikeType, List<User>> allLikesOfProject = getLikesOfProject(project);
 
-        if (isAlreadyLikedByUser(allLikesOfProject, UserService.getAuthUser().getId())) {
-            getDao().removeLikeFromProject(UserService.getAuthUser(), project);
+        if (isAlreadyLikedByUser(allLikesOfProject, UserService.getAuthenticatedUser().getId())) {
+            getDao().removeLikeFromProject(UserService.getAuthenticatedUser(), project);
 
-            if (isSameTypeOfLike(allLikesOfProject, UserService.getAuthUser().getId(), likeType)) {
-                getDao().removeLikeFromProject(UserService.getAuthUser(), project);
+            if (isSameTypeOfLike(allLikesOfProject, UserService.getAuthenticatedUser().getId(), likeType)) {
+                getDao().removeLikeFromProject(UserService.getAuthenticatedUser(), project);
                 return;
             }
         }
 
-        getDao().addLikeToProject(UserService.getAuthUser(), likeType, project);
+        getDao().addLikeToProject(UserService.getAuthenticatedUser(), likeType, project);
     }
 
     public static void addLikeToProjectFromUser(Project project, User user, LikeType likeType) {

@@ -3,7 +3,7 @@ package com.iipsen2.app.utility;
 import java.util.Random;
 
 public class NumberUtil {
-  public static boolean isLong(String string) {
+  public static boolean isStringLong(String string) {
     if (string == null) {
       return false;
     }
@@ -17,7 +17,7 @@ public class NumberUtil {
     }
   }
 
-  public static int getRandom(int from, int to) {
+  public static int getRandomInt(int from, int to) {
     if (from < to)
       return from + new Random().nextInt(Math.abs(to - from));
     return from - new Random().nextInt(Math.abs(to - from));

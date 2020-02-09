@@ -26,8 +26,8 @@ import java.util.Random;
 public class ProjectTableSeeder extends CoreService implements SeederMethods {
     private static final int TOTAL_PROJECTS_TO_ADD = 400;
 
-    private List<String> languages = new ArrayList<>();;
-    private List<String> titles = new ArrayList<>();;
+    private List<String> languages = new ArrayList<>();
+    private List<String> titles = new ArrayList<>();
 
     public ProjectTableSeeder(boolean seed) {
         //remove else block replace with function call
@@ -97,7 +97,7 @@ public class ProjectTableSeeder extends CoreService implements SeederMethods {
     public void likeAllProjectsRandomly() {
         final int startingAtId = UserTableSeeder.DEFAULT_USERS + 1;
         ProjectService.findProjectAll().forEach(project -> {
-            final   int likesToGive = NumberUtil.getRandom(startingAtId, UserTableSeeder.TOTAL_RANDOM_USERS);
+            final   int likesToGive = NumberUtil.getRandomInt(startingAtId, UserTableSeeder.TOTAL_RANDOM_USERS);
 
             for (int givenLikes = startingAtId; givenLikes < likesToGive; givenLikes++) {
                 //split below in variables

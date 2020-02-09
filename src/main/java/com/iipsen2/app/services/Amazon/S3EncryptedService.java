@@ -26,12 +26,12 @@ public class S3EncryptedService extends AmazonService implements S3ServiceMethod
     }
 
     @Override
-    public S3Object getObject(String key) {
+    public S3Object getS3Object(String key) {
         return getS3().getObject(AWS_S3_BUCKET_NAME, key);
     }
 
     @Override
-    public boolean putObject(String key, File object) {
+    public boolean putS3Object(String key, File object) {
         try {
             getS3().putObject(AWS_S3_BUCKET_NAME, key, object);
 
@@ -43,7 +43,7 @@ public class S3EncryptedService extends AmazonService implements S3ServiceMethod
     }
 
     @Override
-    public boolean deleteObject(String key) {
+    public boolean deleteS3Object(String key) {
         try {
             getS3().deleteObject(AWS_S3_BUCKET_NAME, key);
 

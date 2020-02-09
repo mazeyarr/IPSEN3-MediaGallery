@@ -32,7 +32,7 @@ public class UserResource {
     public User postLoginAction(
             @FormParam("token") String token
     ) {
-        return UserService.getAuthUser();
+        return UserService.getAuthenticatedUser();
     }
 
     /**
@@ -52,7 +52,7 @@ public class UserResource {
             @FormParam("password") String password
     ) {
 
-        return UserService.getAuthUser(username, password);
+        return UserService.getAuthenticatedUser(username, password);
     }
 
     @POST
@@ -62,7 +62,7 @@ public class UserResource {
         @Valid @BeanParam UserCreateParams userCreateParams,
         @FormParam("role") String roleType
     ) {
-        if (LookupUtil.lookup(UserRoleType.class, roleType)) {
+        if (LookupUtil.lookupStringIsEnumValue(UserRoleType.class, roleType)) {
             return UserService.createUser(
                 new User(
                     userCreateParams.getUsername(),
@@ -93,7 +93,7 @@ public class UserResource {
             @FormParam("id") long id,
             @FormParam("role") String role
     ) {
-        if (LookupUtil.lookup(UserRoleType.class, role)) {
+        if (LookupUtil.lookupStringIsEnumValue(UserRoleType.class, role)) {
             return UserService.addRoleToUser(id, UserRoleType.valueOf(role));
         } else {
             ExceptionService.throwIlIllegalArgumentException(
@@ -116,7 +116,7 @@ public class UserResource {
             @FormParam("id") long id,
             @FormParam("role") String role
     ) {
-        if (LookupUtil.lookup(UserRoleType.class, role)) {
+        if (LookupUtil.lookupStringIsEnumValue(UserRoleType.class, role)) {
             return UserService.deleteRoleFromUser(id, UserRoleType.valueOf(role));
         } else {
             ExceptionService.throwIlIllegalArgumentException(

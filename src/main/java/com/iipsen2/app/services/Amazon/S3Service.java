@@ -7,7 +7,9 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
+import com.iipsen2.app.services.ExceptionService;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.net.URL;
 import java.util.Date;
@@ -20,12 +22,12 @@ public class S3Service extends AmazonService implements S3ServiceMethods{
             .build();
 
     @Override
-    public S3Object getObject(String key) {
+    public S3Object getS3Object(String key) {
         return getS3().getObject(AWS_S3_BUCKET_NAME, key);
     }
 
     @Override
-    public boolean putObject(String key, File object) {
+    public boolean putS3Object(String key, File object) {
         try {
             PutObjectRequest putObjectRequest = new PutObjectRequest(AWS_S3_BUCKET_NAME, key, object);
             ObjectMetadata objectMetadata = new ObjectMetadata();
@@ -33,20 +35,16 @@ public class S3Service extends AmazonService implements S3ServiceMethods{
             objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             putObjectRequest.setMetadata(objectMetadata);
 
-            PutObjectResult putObjectResult = getS3().putObject(putObjectRequest);
-
-            // TODO: Log
-            // System.out.println("Uploaded: " + object.getName() + " | encryption status: " + putObjectResult.getSSEAlgorithm());
+            getS3().putObject(putObjectRequest);
 
             return true;
         } catch (AmazonS3Exception e) {
-            e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean deleteObject(String key) {
+    public boolean deleteS3Object(String key) {
         try {
             getS3().deleteObject(AWS_S3_BUCKET_NAME, key);
 
@@ -56,7 +54,7 @@ public class S3Service extends AmazonService implements S3ServiceMethods{
         }
     }
 
-    public String generatePreSignedObjectUrl(String objectKey, long expirationDateInMillis) {
+    public String generatePreSignedS3ObjectUrl(String objectKey, long expirationDateInMillis) {
         Date expirationDate = new Date();
 
         expirationDate.setTime(
@@ -73,8 +71,12 @@ public class S3Service extends AmazonService implements S3ServiceMethods{
 
             return url.toString();
         } catch (AmazonServiceException e) {
-            //TODO: Log
-            e.printStackTrace();
+            ExceptionService.throwIlIllegalArgumentException(
+                    this.getClass(),
+                    e.getMessage(),
+                    e.getCause().getMessage(),
+                    Response.Status.BAD_REQUEST
+            );
 
             return "";
         }

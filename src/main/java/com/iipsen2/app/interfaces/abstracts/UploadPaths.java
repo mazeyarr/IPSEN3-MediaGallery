@@ -44,7 +44,7 @@ public abstract class UploadPaths {
         }
     }
 
-    public static String generateTempFilePath(String filename, UploadType uploadType) {
+    public static String generateTemporaryFileSavePath(String filename, UploadType uploadType) {
         switch (uploadType) {
             case PROJECT:
                 return TEMP_FOLDER + PROJECT_PATH + UUID.randomUUID().toString() + "-" + filename;

@@ -3,6 +3,7 @@ package com.iipsen2.app.filters;
 import com.iipsen2.app.MainService;
 import com.iipsen2.app.filters.bindings.AuthBinding;
 import com.iipsen2.app.modules.User.services.UserService;
+import com.iipsen2.app.providers.TokenProvider;
 import com.iipsen2.app.services.ExceptionService;
 
 import javax.annotation.Priority;
@@ -28,44 +29,52 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext context) {
-        // Check if the user gave a Authorization key in the header
-        if (!context.getHeaders().containsKey("Authorization")) {
-            ExceptionService.throwIlIllegalArgumentException(
-                this.getClass(),
-                "Authorization Failed: Token not provided",
-                "Authorization key not provided",
-                Response.Status.BAD_REQUEST
-            );
-        }
+        proceedIfHeaderContainsAuthorizationKey(context);
 
         String token = context.getHeaders().getFirst("Authorization");
 
-        // Check if the token is not empty
+        proceedIfTokenIsNotEmpty(token);
+        proceedIfTokenIsValid(token);
+
+        long user_id = MainService.tokenProvider
+                .getDecodedJWT(token)
+                .getClaim(TokenProvider.ENCODED_CLAIM_USER_ID_KEY)
+                .asLong();
+        UserService.setAuthUser(
+                UserService.getUserById(user_id)
+        );
+    }
+
+    private void proceedIfHeaderContainsAuthorizationKey(ContainerRequestContext context) {
+        if (!context.getHeaders().containsKey("Authorization")) {
+            ExceptionService.throwIlIllegalArgumentException(
+                    this.getClass(),
+                    "Authorization Failed: Token not provided",
+                    "Authorization key not provided",
+                    Response.Status.BAD_REQUEST
+            );
+        }
+    }
+
+    private void proceedIfTokenIsNotEmpty(String token) {
         if (token.equals("")) {
             ExceptionService.throwIlIllegalArgumentException(
-                this.getClass(),
-                "Authorization Failed: Token was empty",
-                "Token was empty in the Authorization header key",
-                Response.Status.BAD_REQUEST
+                    this.getClass(),
+                    "Authorization Failed: Token was empty",
+                    "Token was empty in the Authorization header key",
+                    Response.Status.BAD_REQUEST
             );
         }
+    }
 
-        System.err.println(MainService.tokenProvider.verifyToken(token));
-
-        // Validate the token
+    private void proceedIfTokenIsValid(String token) {
         if (!MainService.tokenProvider.verifyToken(token)) {
             ExceptionService.throwIlIllegalArgumentException(
-                this.getClass(),
-                "Invalid token!",
-                "Token verification failed!",
-                Response.Status.UNAUTHORIZED
+                    this.getClass(),
+                    "Invalid token!",
+                    "Token verification failed!",
+                    Response.Status.UNAUTHORIZED
             );
         }
-
-        // Save user in current session
-        long id = MainService.tokenProvider.getDecodedJWT(token).getClaim("user_id").asLong();
-        UserService.setAuthUser(
-                UserService.getUserById(id)
-        );
     }
 }

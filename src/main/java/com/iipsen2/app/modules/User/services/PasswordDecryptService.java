@@ -10,8 +10,8 @@ public class PasswordDecryptService {
     {
         String[] parts = storedPassword.split(":");
         int iterations = Integer.parseInt(parts[0]);
-        byte[] salt = fromHex(parts[1]);
-        byte[] hash = fromHex(parts[2]);
+        byte[] salt = translatedHexToByteArray(parts[1]);
+        byte[] hash = translatedHexToByteArray(parts[2]);
 
         PBEKeySpec spec = new PBEKeySpec(originalPassword.toCharArray(), salt, iterations, hash.length * 8);
         SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
@@ -24,8 +24,8 @@ public class PasswordDecryptService {
         }
         return diff == 0;
     }
-    private static byte[] fromHex(String hex) throws NoSuchAlgorithmException
-    {
+
+    private static byte[] translatedHexToByteArray(String hex) {
         byte[] bytes = new byte[hex.length() / 2];
         for(int i = 0; i<bytes.length ;i++)
         {

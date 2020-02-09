@@ -15,7 +15,7 @@ import java.util.List;
 public class UserService extends CoreService {
     private static User AuthUser;
 
-    public static User getAuthUser(String username, String password) {
+    public static User getAuthenticatedUser(String username, String password) {
         try {
             User authUser = getDao().findUserByUsername(username);
 
@@ -45,7 +45,7 @@ public class UserService extends CoreService {
 
     public static User getUserById(long id) {
         User user = getDao().findUserById(id);
-        if (user.isValidUser() && user != null) {
+        if (user.isValidUser()) {
             List<UserRoles> authUserRoles = getDao().findUserRolesByUserId(
                 user.getId()
             );
@@ -97,7 +97,7 @@ public class UserService extends CoreService {
         return user;
     }
 
-    public static User getAuthUser() {
+    public static User getAuthenticatedUser() {
         return AuthUser;
     }
 

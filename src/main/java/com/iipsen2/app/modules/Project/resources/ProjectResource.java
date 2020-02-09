@@ -1,7 +1,5 @@
 package com.iipsen2.app.modules.Project.resources;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.iipsen2.app.filters.bindings.AuthBinding;
 import com.iipsen2.app.interfaces.enums.LikeType;
 import com.iipsen2.app.modules.Project.filters.bindings.ProjectCreatorBinding;
@@ -85,7 +83,7 @@ public class ProjectResource {
             projectCreateParams.getTitle(),
             projectCreateParams.getLanguage(),
             projectCreateParams.getGrade(),
-            UserService.getAuthUser(),
+            UserService.getAuthenticatedUser(),
             projectCreateParams.getEducation()
         );
 
@@ -103,7 +101,7 @@ public class ProjectResource {
             projectUpdateParams.getTitle(),
             projectUpdateParams.getLanguage(),
             projectUpdateParams.getGrade(),
-            UserService.getAuthUser(),
+            UserService.getAuthenticatedUser(),
             projectUpdateParams.getEducation()
         );
 
@@ -212,7 +210,7 @@ public class ProjectResource {
     ) {
         Project project = ProjectService.findProjectById(projectId);
 
-        if (LookupUtil.lookup(LikeType.class, likeType)) {
+        if (LookupUtil.lookupStringIsEnumValue(LikeType.class, likeType)) {
             LikeType validatedLikeType = LikeType.valueOf(likeType);
 
             if (project.isValid()) {
